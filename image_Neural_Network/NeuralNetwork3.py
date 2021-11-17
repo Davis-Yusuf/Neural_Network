@@ -15,20 +15,36 @@ class NeuralNetwork:
         self.h1 = h1
         self.h2 = h2
         self.out = out
-        self.weights_i_h1 = np.random.uniform(-1, 1, (128, 784))
-        self.weights_h1_h2 = np.random.uniform(-1, 1, (128, 128))
-        self.weights_h2_o = np.random.uniform(-1, 1, (10, 128))
-        self.out_bias = np.ones(10)
-        self.h1_bias = np.ones(128)
-        self.h2_bias = np.ones(128)
+        self.weights_i_h1 = [0] * inputs
+        self.weights_h1_h2 = [0] * h1
+        self.weights_h2_o = [0] * h2
+        self.h2_out_bias = [[0] * 1 for _ in range(h2)]
+        self.in_h1_bias = [[0] * 1 for _ in range(inputs)]
+        self.h1_h2_bias = [[0] * 1 for _ in range(h1)]
+        for k in range(inputs):
+            self.weights_i_h1[k] = np.random.uniform(-1, 1, inputs)
+            self.in_h1_bias[k] = np.ones(inputs)
+        for z in range(h1):
+            self.weights_h1_h2[z] = np.random.uniform(-1, 1, h2)
+            self.h1_h2_bias[z] = np.ones(h2)
+        for c in range(out):
+            self.weights_h2_o[c] = np.random.uniform(-1, 1, out)
+            self.h2_out_bias[c] = np.ones(out)
 
     def feed_f(self, inputs, targets):
-        self.inputs = inputs
-        output_output =
-        h1_ouput = {}
+
+        h1_output = {}
         h2_output = {}
-        for i in range(128):
-            h1_ouput[i] = np.sum(np.matmul(inputs, self.weights_i_h1))
+        out_output = {}
+
+        # print(inputs[1].shape, self.weights_i_h1[1].shape)
+        for i in range(self.h1):
+            h1_output[i] = np.sum(np.matmul(inputs[i] / 255, self.weights_i_h1[i]))
+            h1_output[i] = np.add(h1_output[i], self.in_h1_bias[i])
+
+        print(h1_output)
+        print(h1_output[1])
+
 
     def back_p(self):
         pass
@@ -93,14 +109,14 @@ if __name__ == "__main__":
     train_inputs = read(sys.argv[1])
     train_labels = read(sys.argv[2])
     # test_inputs = read(sys.argv[3])
-    my_agent = NeuralNetwork(1, 2, 3, 4)
-    print(my_agent.out_bias)
-    all_batches = get_batches(train_inputs)
-
-    for i in range(len(all_batches)):
-        temp_batches = all_batches[i]
-        for j in range(all_batches[0].shape[0]):
-            input_nodes = temp_batches[j] / 255
-            # my_agent.inputs = input_nodes
-            # my_agent.feed_f()
+    my_agent = NeuralNetwork(784, 128, 128, 10)
+    my_agent.feed_f(train_inputs, 2)
+    # all_batches = get_batches(train_inputs)
+    #
+    # for i in range(len(all_batches)):
+    #     temp_batches = all_batches[i]
+    #     for j in range(all_batches[0].shape[0]):
+    #         input_nodes = temp_batches[j] / 255
+    #         # my_agent.inputs = input_nodes
+    #         # my_agent.feed_f()
 
