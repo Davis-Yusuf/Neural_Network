@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import sys
+import pandas as pd
 
 
 def sig_activation_function(node):
@@ -52,7 +53,7 @@ class NeuralNetwork:
 
         z1_output = np.sum(np.matmul(inputs / 255, self.weights_i_h1[0])) + self.h1_bias[0]
         h1_output = sig_activation_function(z1_output)
-        label_list = np.zeros(self.out)
+        label_list = np.zeros(self.out)    # TARGET LABEL HAS TO GO TO BACK-PROP
 
         for i in range(1, self.h1):
             z1_output = np.vstack((z1_output, np.sum(np.matmul(inputs / 255, self.weights_i_h1[i])) + self.h1_bias[i]))
@@ -143,22 +144,16 @@ def get_batches(dataset):  # Currently assuming that the size will be perfectly 
 if __name__ == "__main__":
     train_inputs = read(sys.argv[1])
     train_labels = read(sys.argv[2])
+    test_inputs = read(sys.argv[3])
 
-    # training = train_inputs[:5200]
+    # # training = train_inputs[:5200]
     # testing = train_inputs[5200:]
-    # training_l = train_labels[:5200]
+    # # training_l = train_labels[:5200]
     # testing_l = train_labels[5200:]
 
-    total = train_inputs.shape[0]
-    correct = 0
+    # total = testing.shape[0]
+    epochs = 20
     my_agent = NeuralNetwork(784, 64, 64, 10)
-
-    all_batches = get_batches(train_inputs)
-
-    for g in range(len(all_batches)):
-        temp_batches = all_batches[g]
-        for h in range(temp_batches.shape[0]):
-
 
     h2_out_weight = np.zeros((10, 64))
     h1_h2_weight = np.zeros((64, 64))
@@ -167,33 +162,42 @@ if __name__ == "__main__":
     h1_h2_bias = np.zeros((64, 1))
     in_h1_bias = np.zeros((64, 1))
 
-    for m in range(training.shape[0]):
-        a, b, c, d, e, f, g = my_agent.feed_f(training[m], training_l[m])
-        temp_h2_w, temp_h2_b, temp_h1_w, temp_h1_b, temp_in_w, temp_in_b = my_agent.back_p(a, b, c, d, e, f, g, 0.01)
-        h2_out_weight = h2_out_weight + temp_h2_w
-        h1_h2_weight = h1_h2_weight + temp_h1_w
-        in_h1_weight = in_h1_weight + temp_in_w
-        h2_out_bias = h2_out_bias + temp_h2_b
-        h1_h2_bias = h1_h2_bias + temp_h1_b
-        in_h1_bias = in_h1_bias + temp_in_b
+    train_batches = get_batches(train_inputs)
+    label_batches = get_batches(train_labels)
 
-    my_agent.weights_i_h1 = my_agent.weights_i_h1 + (in_h1_weight / training.shape[0])
-    my_agent.weights_h1_h2 = my_agent.weights_h1_h2 + (h1_h2_weight / training.shape[0])
-    my_agent.weights_h2_o = my_agent.weights_h2_o + (h2_out_weight / training.shape[0])
+    for e in range(epochs):
+        for g in range(len(train_batches)):
+            temp_batches = train_batches[g]
+            temp2_batches = label_batches[g]
+            for h in range(temp_batches.shape[0]):
+                a, b, c, d, e, f, g = my_agent.feed_f(temp_batches[h], temp2_batches[h])
+                temp_h2_w, temp_h2_b, temp_h1_w, temp_h1_b, temp_in_w, temp_in_b = my_agent.back_p(a, b, c, d, e, f, g, 0.01)
+                h2_out_weight = h2_out_weight + temp_h2_w
+                h1_h2_weight = h1_h2_weight + temp_h1_w
+                in_h1_weight = in_h1_weight + temp_in_w
+                h2_out_bias = h2_out_bias + temp_h2_b
+                h1_h2_bias = h1_h2_bias + temp_h1_b
+                in_h1_bias = in_h1_bias + temp_in_b
 
-    my_agent.h2_bias = my_agent.h2_bias + (in_h1_bias / training.shape[0])
-    my_agent.h1_bias = my_agent.h1_bias + (h1_h2_bias / training.shape[0])
-    my_agent.out_bias = my_agent.out_bias + (h2_out_bias / training.shape[0])
+            my_agent.weights_i_h1 = my_agent.weights_i_h1 + (in_h1_weight / temp_batches.shape[0])
+            my_agent.weights_h1_h2 = my_agent.weights_h1_h2 + (h1_h2_weight / temp_batches.shape[0])
+            my_agent.weights_h2_o = my_agent.weights_h2_o + (h2_out_weight / temp_batches.shape[0])
 
-    for n in range(testing.shape[0]):
-        a1, b1, c1, d1, e1, f1, g1 = my_agent.feed_f(testing[n], testing_l[n])
-        answer = np.argmax(a1)
-        if answer == int(testing_l[n]):
-            correct = correct + 1
+            my_agent.h2_bias = my_agent.h2_bias + (in_h1_bias / temp_batches.shape[0])
+            my_agent.h1_bias = my_agent.h1_bias + (h1_h2_bias / temp_batches.shape[0])
+            my_agent.out_bias = my_agent.out_bias + (h2_out_bias / temp_batches.shape[0])
 
-    print(correct)
-    print(total)
-    print(100 * (correct/total))
+    list_1 = []
+    for n in range(test_inputs.shape[0]):
+        a1, b1, c1, d1, e1, f1, g1 = my_agent.feed_f(test_inputs[n], testing_l[n])
+        list_1.append(np.argmax(a1))
+    answer = np.array(list_1)
+    pd.DataFrame(answer).to_csv('test_predictions.csv', header=False, index=False)
+
+        #     answer = np.argmax(a1)
+        #     if answer == int(testing_l[n]):
+        #         correct = correct + 1
+        # print(100 * (correct / total))
 
     print('done')
 
